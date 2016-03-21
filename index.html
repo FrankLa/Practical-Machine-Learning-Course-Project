@@ -156,7 +156,7 @@ if(!<span class="kw">exists</span>(<span class="st">&quot;pml.quiz&quot;</span>)
   pml.quiz &lt;-<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">&quot;pml-testing.csv&quot;</span>, <span class="dt">header =</span> <span class="ot">TRUE</span>, <span class="dt">na.strings =</span> <span class="kw">c</span>(<span class="st">&quot;NA&quot;</span>,<span class="st">&quot;&quot;</span>))
 }</code></pre>
 <p>The dataframe <code>pml.training</code> contains all the training data. By peeking at the data (<code>view(pml.training)</code> in RStudio), we see that it has 19622 observations on 160 variables, where the <code>classe</code> variable in the 160th column is the label (A, …, E) to be predicted. Among the rest of the variables, not all can be used as predictors and we subsequently need to filter the relevant variables.</p>
-<p>Meanwhile, <code>pml.quiz</code> contains 20 samples whose labels are not given. They are the 20 prediction problems on Coursera quiz 4. There is no <code>classe</code> variable and the last column is named <code>problem_id</code>.</p>
+<p>Meanwhile, <code>pml.quiz</code> contains 20 samples whose labels are not given. They are the 20 prediction problems on Coursera Prediction Quiz. There is no <code>classe</code> variable and the last column is named <code>problem_id</code>.</p>
 </div>
 <div id="data-splitting" class="section level2">
 <h2><span class="header-section-number">2.2</span> Data Splitting</h2>
@@ -255,7 +255,7 @@ time.knn &lt;-<span class="st"> </span><span class="kw">system.time</span>({
 </div>
 <div id="random-forest" class="section level2">
 <h2><span class="header-section-number">3.4</span> Random Forest</h2>
-<p>For random forest, I use the <code>parRF</code> method to make it run on 4 parallel cores. In addition, <code>prox = F</code> and <code>nodesize = 10</code> are specified so as to reduce the amount of computation and speed up the method. The <code>x = ...</code> and <code>y = ...</code> are also supposed to make <code>train()</code> run faster.</p>
+<p>For random forest, I use the <code>parRF</code> method to make it run on 4 parallel cores. In addition, <code>prox = F</code> and <code>nodesize = 10</code> are specified so as to reduce the amount of computation and speed up the method.</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">1000</span>)
 <span class="kw">library</span>(doParallel); <span class="kw">registerDoParallel</span>(<span class="dt">cores =</span> <span class="dv">4</span>)
 time.parRF &lt;-<span class="st"> </span><span class="kw">system.time</span>({
@@ -362,7 +362,7 @@ X &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="
 <li>The performance between the training set and the test set is insignificant so less chance of overfitting the model.</li>
 <li>Both <code>rf</code> and <code>gbm</code> take a long time to train due to the large number of submodels they need to compute. <code>rf</code> turns out to be most powerful in predicting this data set but is very time consuming (without parallel processing, it takes around 600 seconds). For a more balanced solution, we can consider <code>knn</code> or <code>svm</code>.</li>
 </ul>
-<p>For this project, suppose I care more about accuracy so I pick random forest as my final model. Here is its full confusion matrix on the test set.</p>
+<p>For this project, suppose I care more about accuracy so I pick <strong>random forest</strong> as my final model. Here is its full confusion matrix on the test set.</p>
 <pre class="sourceCode r"><code class="sourceCode r">cm.parRF2</code></pre>
 <pre><code>## Confusion Matrix and Statistics
 ## 

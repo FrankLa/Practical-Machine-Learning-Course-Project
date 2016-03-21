@@ -1,20 +1,6 @@
----
-title: "Practical Machine Learning - Course Project Report: Weight Lifting Activity Prediction"
-author: "Frank La"
-date: "March 21, 2016"
-output:
-  html_document:
-    fig_caption: yes
-    force_captions: yes
-    highlight: pygments
-    keep_md: yes
-    number_sections: yes
-    theme: cerulean
-  pdf_document:
-    fig_caption: yes
-    keep_tex: yes
-    number_sections: yes
----
+# Practical Machine Learning - Course Project Report: Weight Lifting Activity Prediction
+Frank La  
+March 21, 2016  
 
 
 # Overview
@@ -35,13 +21,15 @@ This analysis is done with `R` v3.2.2, and packages `caret` v6.0-64, `randomFore
 
 
 First, load some `R` libraries.
-```{r, warning=FALSE, message=FALSE}
+
+```r
 library(caret); library(e1071)
 ```
 
 The data is downloaded and read. 
 
-```{r, cache = TRUE}
+
+```r
 if(!exists("pml.training")){
   if(!file.exists("pml-training.csv")) {
     download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv", 
@@ -69,7 +57,8 @@ Meanwhile, `pml.quiz` contains 20 samples whose labels are not given. They are t
 The first thing to do is to split the data into a training set and a test set. Here I use a 80:20 ratio, because subsequently I employ $K$-fold cross validation which further subdivides the training set. So I have roughly a 60:20:20 division for training, cross validation and testing.
 
 
-```{r}
+
+```r
 set.seed(7000)
 inTrain <- createDataPartition(pml.training$classe, p = 0.80)[[1]]
 
@@ -84,13 +73,21 @@ testing <- pml.training[-inTrain,]
 
 Firstly, look at variables 1 to 7 from the data. 
 
-```{r}
+
+```r
 names(pml.training[,1:7])
+```
+
+```
+## [1] "X"                    "user_name"            "raw_timestamp_part_1"
+## [4] "raw_timestamp_part_2" "cvtd_timestamp"       "new_window"          
+## [7] "num_window"
 ```
 
 A quick look at their values and the paper [1] shows that they have nothing to do with measurements from the accelerometers. Thus, they are not relevant for the prediction exercise and can be removed.
 
-```{r}
+
+```r
 training <- training[, -(1:7)]
 testing <- testing[, -(1:7)]
 pml.quiz <- pml.quiz[, -(1:7)]
@@ -102,16 +99,24 @@ Note that whatever transformation on the training set applies equally on the tes
 
 Our dataset has several columns that are predominantly NAs. 
 
-```{r}
+
+```r
 NAproportion <- apply(training, 2, function(x){
   sum(is.na(x)) / nrow(training)
 })
 table(NAproportion)
 ```
 
+```
+## NAproportion
+##                0 0.97897955283776 
+##               53              100
+```
+
 We see that 100 variables contain 97.9% NAs. Any variable with more than 90% NAs does not have much predicting power and should be removed.
 
-```{r}
+
+```r
 training <- training[,-which(NAproportion > 0.9)]
 testing <- testing[, -which(NAproportion > 0.9)]
 pml.quiz <- pml.quiz[, -which(NAproportion > 0.9)]
@@ -121,16 +126,26 @@ pml.quiz <- pml.quiz[, -which(NAproportion > 0.9)]
 
 We could also check if any variables with near-zero variance (and hence little predicting power).
 
-```{r}
+
+```r
 nearZeroVar(training) 
+```
+
+```
+## integer(0)
 ```
 
 The result is empty, indicating no such variables.
 
 Thus, the training set is now finalized. It has 15699 observations and 53 variables (with `classe` in the 53th column):
 
-```{r}
+
+```r
 dim(training)
+```
+
+```
+## [1] 15699    53
 ```
 
 
@@ -138,7 +153,8 @@ dim(training)
 
 Now, I specify the training options. 
 
-```{r}
+
+```r
 fitControl <- trainControl(method = "cv", number = 5, allowParallel = TRUE)
 ```
 
@@ -160,7 +176,8 @@ I plan to train several different models to see how they perform on the given da
 ## Multinomial Logistic Regression
 
 
-```{r, warning=FALSE, message=FALSE, cache = TRUE}
+
+```r
 set.seed(1000)
 time.multinom <- system.time({
   m.multinom <- train(x = training[, -53], y = training$classe, method = "multinom", 
@@ -178,7 +195,8 @@ I train the model using CARET's `multinom` method from the `nnet` package (thus 
 
 Similarly, I train a `lda` model as follows. This will implicitly use the `MASS` package.
 
-```{r, warning=FALSE, message=FALSE, cache = TRUE}
+
+```r
 set.seed(1000)
 time.lda <- system.time({
   m.lda <- train(x = training[, -53], y = training$classe, method = "lda", trControl = fitControl)
@@ -190,7 +208,8 @@ time.lda <- system.time({
 
 For the `knn` method, I choose to center and scale the data.
 
-```{r, warning=FALSE, message=FALSE, cache = TRUE}
+
+```r
 set.seed(1000)
 time.knn <- system.time({
   m.knn <- train(x = training[, -53], y = training$classe, method = "knn",  
@@ -204,7 +223,8 @@ time.knn <- system.time({
 
 For random forest, I use the `parRF` method to make it run on 4 parallel cores. In addition, `prox = F` and `nodesize = 10` are specified so as to reduce the amount of computation and speed up the method. 
 
-```{r, warning=FALSE, message=FALSE, cache = TRUE}
+
+```r
 set.seed(1000)
 library(doParallel); registerDoParallel(cores = 4)
 time.parRF <- system.time({
@@ -218,7 +238,8 @@ time.parRF <- system.time({
 
 For SVM, I use the `svm()` function from `e1071` package.
 
-```{r, warning=FALSE, message=FALSE, cache = TRUE}
+
+```r
 set.seed(1000)
 time.svm <- system.time({
   m.svm <- svm(classe ~ ., data = training)
@@ -230,7 +251,8 @@ time.svm <- system.time({
 
 Finally, the `gbm` model.
 
-```{r, warning=FALSE, message=FALSE, cache = TRUE}
+
+```r
 set.seed(1000)
 time.gbm <- system.time({
   m.gbm <-  train(x = training[, -53], y = training$classe, method = "gbm", 
@@ -246,14 +268,16 @@ time.gbm <- system.time({
 
 I calculate the accuracy of the trained models on both the training set and test set. 
 
-```{r, cache = TRUE}
+
+```r
 cm.multinom1 <- confusionMatrix(predict(m.multinom, newdata = training[,-53]), training$classe)
 cm.multinom2 <- confusionMatrix(predict(m.multinom, newdata = testing[,-53]), testing$classe)
 ```
 
 
 
-```{r, cache = TRUE}
+
+```r
 cm.lda1 <- confusionMatrix(predict(m.lda, newdata = training[,-53]), training$classe)
 cm.lda2 <- confusionMatrix(predict(m.lda, newdata = testing[,-53]), testing$classe)
 ```
@@ -261,28 +285,32 @@ cm.lda2 <- confusionMatrix(predict(m.lda, newdata = testing[,-53]), testing$clas
 
 
 
-```{r, cache = TRUE}
+
+```r
 cm.knn1 <- confusionMatrix(predict(m.knn, newdata = training[,-53]), training$classe)
 cm.knn2 <- confusionMatrix(predict(m.knn, newdata = testing[,-53]), testing$classe)
 ```
 
 
 
-```{r, cache = TRUE}
+
+```r
 cm.parRF1 <- confusionMatrix(predict(m.parRF, newdata = training[,-53]), training$classe)
 cm.parRF2 <- confusionMatrix(predict(m.parRF, newdata = testing[,-53]), testing$classe)
 ```
 
 
 
-```{r, cache = TRUE}
+
+```r
 cm.svm1 <- confusionMatrix(predict(m.svm, newdata = training[,-53]), training$classe)
 cm.svm2 <- confusionMatrix(predict(m.svm, newdata = testing[,-53]), testing$classe)
 ```
 
 
 
-```{r, cache = TRUE}
+
+```r
 cm.gbm1 <- confusionMatrix(predict(m.gbm, newdata = training[,-53]), training$classe)
 cm.gbm2 <- confusionMatrix(predict(m.gbm, newdata = testing[,-53]), testing$classe)
 ```
@@ -291,7 +319,8 @@ cm.gbm2 <- confusionMatrix(predict(m.gbm, newdata = testing[,-53]), testing$clas
 Table 1 shows the accurate prediction rates on the training set as well as the test set. I also include one set of elapsed time for training each of the model as another performance criterion (the amount of time may vary on different runs and depend on the computer used to run the script or the random seed). 
 
 
-```{r,  warning=FALSE, message=FALSE}
+
+```r
 library(knitr)
 X <- data.frame(c("Multinom", "LDA", "kNN", "RF", "SVM", "GBM"), 
                 c(cm.multinom1$overall[1], cm.lda1$overall[1], cm.knn1$overall[1],
@@ -304,6 +333,19 @@ kable(X, digits = 4, caption = "Table 1: Performance of the various models.",
 ```
 
 
+
+Table: Table 1: Performance of the various models.
+
+Method      Train Accuracy   Test Accuracy   Elapsed Time (seconds)
+---------  ---------------  --------------  -----------------------
+Multinom            0.6770          0.6791                   128.36
+LDA                 0.7044          0.7092                     2.09
+kNN                 0.9887          0.9737                    46.58
+RF                  0.9994          0.9946                   112.70
+SVM                 0.9522          0.9498                    36.40
+GBM                 0.9748          0.9625                   112.30
+
+
 Here are some remarks on the results:
 
 - The `multinom` and `lda` methods do worse than the others.
@@ -314,17 +356,58 @@ Here are some remarks on the results:
 
 For this project, suppose I care more about accuracy so I pick **random forest** as my final model. Here is its full confusion matrix on the test set.
 
-```{r}
+
+```r
 cm.parRF2
 ```
 
-The expected out-of-sample error of my model is given by $1 - (Test\ Accuracy)$, thus `r (1-cm.parRF2$overall[1])*100`%.  
+```
+## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    A    B    C    D    E
+##          A 1114    4    0    0    0
+##          B    2  751    0    1    0
+##          C    0    4  682    5    0
+##          D    0    0    2  636    2
+##          E    0    0    0    1  719
+## 
+## Overall Statistics
+##                                           
+##                Accuracy : 0.9946          
+##                  95% CI : (0.9918, 0.9967)
+##     No Information Rate : 0.2845          
+##     P-Value [Acc > NIR] : < 2.2e-16       
+##                                           
+##                   Kappa : 0.9932          
+##  Mcnemar's Test P-Value : NA              
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity            0.9982   0.9895   0.9971   0.9891   0.9972
+## Specificity            0.9986   0.9991   0.9972   0.9988   0.9997
+## Pos Pred Value         0.9964   0.9960   0.9870   0.9938   0.9986
+## Neg Pred Value         0.9993   0.9975   0.9994   0.9979   0.9994
+## Prevalence             0.2845   0.1935   0.1744   0.1639   0.1838
+## Detection Rate         0.2840   0.1914   0.1738   0.1621   0.1833
+## Detection Prevalence   0.2850   0.1922   0.1761   0.1631   0.1835
+## Balanced Accuracy      0.9984   0.9943   0.9971   0.9939   0.9985
+```
+
+The expected out-of-sample error of my model is given by $1 - (Test\ Accuracy)$, thus 0.5353046%.  
 
 Fig. 1 below shows the [variable importance](http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm#varimp) in our model.
 
-```{r, warning=FALSE, message=FALSE, fig.height=7, fig.width=7, fig.cap="Fig. 1: Variable importance plot"}
+
+```r
 plot(varImp(m.parRF))
 ```
+
+<div class="figure">
+<img src="index_files/figure-html/unnamed-chunk-25-1.png" alt="Fig. 1: Variable importance plot"  />
+<p class="caption">Fig. 1: Variable importance plot</p>
+</div>
 
 
 
@@ -332,8 +415,14 @@ plot(varImp(m.parRF))
 
 I use my random forest model to predict on the quiz set.
 
-```{r}
+
+```r
 predict(m.parRF, newdata = pml.quiz[,-53])
+```
+
+```
+##  [1] B A B A A E D B A A B C B A E E A B B B
+## Levels: A B C D E
 ```
 
 The above answers are submitted for the Prediction Quiz with a 20/20 score.
