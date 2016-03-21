@@ -296,7 +296,7 @@ cm.parRF2 &lt;-<span class="st"> </span><span class="kw">confusionMatrix</span>(
 cm.svm2 &lt;-<span class="st"> </span><span class="kw">confusionMatrix</span>(<span class="kw">predict</span>(m.svm, <span class="dt">newdata =</span> testing[,-<span class="dv">53</span>]), testing$classe)</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r">cm.gbm1 &lt;-<span class="st"> </span><span class="kw">confusionMatrix</span>(<span class="kw">predict</span>(m.gbm, <span class="dt">newdata =</span> training[,-<span class="dv">53</span>]), training$classe)
 cm.gbm2 &lt;-<span class="st"> </span><span class="kw">confusionMatrix</span>(<span class="kw">predict</span>(m.gbm, <span class="dt">newdata =</span> testing[,-<span class="dv">53</span>]), testing$classe)</code></pre>
-<p>Table 1 shows the accurate prediction rates on the training set as well as the test set. I also include one set of elapsed time for training each of the model as another performance criterion (the amount of time may vary on different runs and depend on the computer used to run the script or the random seed).</p>
+<p>Table 1 shows the accurate prediction rates on the training set as well as the test set. I also include one set of elapsed time for training each of the model as another performance criterion (the amount of time may vary on different runs and depend on the computer used to run the script or the random seed; hence a more accurate measure is to run multiple times and average the results).</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(knitr)
 X &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="kw">c</span>(<span class="st">&quot;Multinom&quot;</span>, <span class="st">&quot;LDA&quot;</span>, <span class="st">&quot;kNN&quot;</span>, <span class="st">&quot;RF&quot;</span>, <span class="st">&quot;SVM&quot;</span>, <span class="st">&quot;GBM&quot;</span>), 
                 <span class="kw">c</span>(cm.multinom1$overall[<span class="dv">1</span>], cm.lda1$overall[<span class="dv">1</span>], cm.knn1$overall[<span class="dv">1</span>],
@@ -362,7 +362,7 @@ X &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="
 <li>The performance between the training set and the test set is insignificant so less chance of overfitting the model.</li>
 <li>Both <code>rf</code> and <code>gbm</code> take a long time to train due to the large number of submodels they need to compute. <code>rf</code> turns out to be most powerful in predicting this data set but is very time consuming (without parallel processing, it takes around 600 seconds). For a more balanced solution, we can consider <code>knn</code> or <code>svm</code>.</li>
 </ul>
-<p>For this project, suppose I care more about accuracy so I pick <strong>random forest</strong> as my final model. Here is its full confusion matrix on the test set.</p>
+<p>For this project, suppose I care more about accuracy so I pick <strong>random forest</strong> as my final model. An interesting side note is that [1] also used random forest as their classification method, although the size is smaller (10 bagged random forests with 10 trees in each, while ours use the default option <code>ntree = 500</code> which might explain a better accuracy). Here is its full confusion matrix on the test set.</p>
 <pre class="sourceCode r"><code class="sourceCode r">cm.parRF2</code></pre>
 <pre><code>## Confusion Matrix and Statistics
 ## 

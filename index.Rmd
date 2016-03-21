@@ -288,7 +288,7 @@ cm.gbm2 <- confusionMatrix(predict(m.gbm, newdata = testing[,-53]), testing$clas
 ```
 
 
-Table 1 shows the accurate prediction rates on the training set as well as the test set. I also include one set of elapsed time for training each of the model as another performance criterion (the amount of time may vary on different runs and depend on the computer used to run the script or the random seed). 
+Table 1 shows the accurate prediction rates on the training set as well as the test set. I also include one set of elapsed time for training each of the model as another performance criterion (the amount of time may vary on different runs and depend on the computer used to run the script or the random seed; hence a more accurate measure is to run multiple times and average the results). 
 
 
 ```{r,  warning=FALSE, message=FALSE}
@@ -312,7 +312,7 @@ Here are some remarks on the results:
 - Both `rf` and `gbm` take a long time to train due to the large number of submodels they need to compute. `rf` turns out to be most powerful in predicting this data set but is very time consuming (without parallel processing, it takes around 600 seconds). For a more balanced solution, we can consider `knn` or `svm`.
 
 
-For this project, suppose I care more about accuracy so I pick **random forest** as my final model. Here is its full confusion matrix on the test set.
+For this project, suppose I care more about accuracy so I pick **random forest** as my final model. An interesting side note is that [1] also used random forest as their classification method, although the size is smaller (10 bagged random forests with 10 trees in each, while ours use the default option `ntree = 500` which might explain a better accuracy). Here is its full confusion matrix on the test set.
 
 ```{r}
 cm.parRF2
